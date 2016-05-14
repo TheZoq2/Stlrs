@@ -1,6 +1,6 @@
 import sfml as sf
 
-SCALE = 0.2
+SCALE = 0.5
 
 class tile:
     
