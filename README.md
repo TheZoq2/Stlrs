@@ -1,5 +1,7 @@
 # Stlrs
-Inovative board game engine for the 21th century
+Inovative board game engine for the 21th century :)
+
+A quick video of the project in action can be seen [here](https://www.youtube.com/watch?v=aMyHLjdJJoI)
 
 This project is the result of the LIU Spring Game Jam 2016. The goal was to create a semi physical 
 version of the settlers of catan board game. Players still interract with the game using regular physical
