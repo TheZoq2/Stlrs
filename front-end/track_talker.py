@@ -1,5 +1,7 @@
 import os
 
+SHOULD_RUN = False
+
 class TrackTalker:
     def tell_calibrate():
         TrackTalker._tell_command("calibrate");
@@ -7,4 +9,5 @@ class TrackTalker:
         TrackTalker._tell_command("restart");
 
     def _tell_command(cmd):
-        os.popen("echo " + cmd + " > /tmp/stlrs_cmd")
+        if SHOULD_RUN:
+            os.popen("echo " + cmd + " > /tmp/stlrs_cmd")

@@ -4,6 +4,7 @@ from tile import *
 from enum import *
 import time
 import os
+import math
 
 from track_talker import TrackTalker
 
@@ -26,12 +27,13 @@ def read_camera_result():
 
             coords = line.split(",");
             
-            result.append((float(coords[0]), float(coords[1])))
+            result.append(sf.Vector2(float(coords[0]), float(coords[1])))
     return result
 
 
+SCREEN_CORRECTION = 1.82
 SCREEN_SIZE = (550,550)
-SCREEN_SIZE_CORRECTED = ((SCREEN_SIZE[0] * 1.82, SCREEN_SIZE[1] * 1.82))
+SCREEN_SIZE_CORRECTED = ((SCREEN_SIZE[0] * SCREEN_CORRECTION, SCREEN_SIZE[1] * SCREEN_CORRECTION))
 
 STONE, CLAY, WHEAT, WOOL, WOOD, DESERT = range(0,6)
 TYPES = {STONE: 'media/stone.png', 
@@ -53,7 +55,52 @@ VALID_COORDINATES = [(1, 0), (2, 0), (3, 0),
         (0, 2), (1, 2), (2, 2), (3, 2), (4, 2),
         (0, 3), (1, 3), (2, 3), (3, 3),
         (1, 4), (2, 4), (3, 4)]
-        
+
+
+def calibrate():
+    global game_state
+    global camera_offset
+
+    CONST_CAMERA_OFFSET = sf.Vector2(100, 100)
+
+    if time.time() > img_cal_start + 2: #Find the offset of the pieces
+        smallest_distance = 1000000000000
+        smallest_coord = coords[0]
+        #Find the top left corner
+        for coord in coords:
+            distance = math.sqrt(coord.x**2 + coord.y**2)
+            if distance < smallest_distance:
+                smallest_distance = distance
+                smallest_coord = coord
+
+        camera_offset = smallest_coord -CONST_CAMERA_OFFSET
+
+        game_state = GameState.START_GAME
+    elif time.time() > img_cal_start + 1: #Let the tracker do some matrix magick
+        #Do calibration stuff
+        TrackTalker.tell_calibrate();
+        #game_state = GameState.START_GAME
+
+    white_sprite = sf.Sprite(std_texture);
+    white_sprite.scale(SCREEN_SIZE_CORRECTED)
+    window.draw(white_sprite)
+
+def get_closest_tile(target):
+    closest_tile = tiles[0];
+    lowest_distance = 10000000000000000
+
+    for y in tiles:
+        for tile in y:
+            if tile:
+                distance = math.sqrt((target.x - tile.get_world_pos()[0])**2 + (target.y - tile.get_world_pos()[1])**2)
+
+                if distance < lowest_distance:
+                    lowest_distance = distance
+                    closest_tile = tile
+    
+    return closest_tile
+
+camera_offset = sf.Vector2(0,0)
 
 # create the main window
 window = sf.RenderWindow(sf.VideoMode(SCREEN_SIZE[0], SCREEN_SIZE[1]), "PySFML")
@@ -74,15 +121,17 @@ std_texture = sf.Texture.from_file("media/1x1.png")
 
 calibrationTexture = sf.Texture.from_file("media/Calibration.png")
 calibrationSprite = sf.Sprite(calibrationTexture);
-calibrationSprite.scale((1.82,1.82))
+calibrationSprite.scale((SCREEN_CORRECTION,SCREEN_CORRECTION))
 
-state = GameState.WAIT_CALIBRATE
+game_state = GameState.WAIT_CALIBRATE
 
 calibratePressed = False;
 
 img_cal_start = 0
 
 TrackTalker.tell_restart();
+
+coords=[]
 
 # start the game loop
 while window.is_open:
@@ -102,32 +151,43 @@ while window.is_open:
                 x.draw(window);
 
     coords = read_camera_result()[1:];
+    corrected_coords = []
 
+    
+    for coord in coords:
+        x = (coord.x )/SCREEN_CORRECTION
+        y = (coord.y )/SCREEN_CORRECTION
 
-    if state == GameState.WAIT_CALIBRATE:
+        new_vec = sf.Vector2(x,y)
+        corrected_coords.append(new_vec + camera_offset)
+
+        print(coord - camera_offset, end="")
+
+    print("")
+
+    if game_state == GameState.WAIT_CALIBRATE:
         window.draw(calibrationSprite);
 
         if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN) and window.has_focus():
             img_cal_start = time.time();
-            state = GameState.CALIBRATE
+            game_state = GameState.CALIBRATE
 
-    elif state == GameState.CALIBRATE:
-        if time.time() > img_cal_start + 1:
-            #Do calibration stuff
-            TrackTalker.tell_calibrate();
-            state = GameState.START_GAME
-        else:
-            white_sprite = sf.Sprite(std_texture);
-            white_sprite.scale(SCREEN_SIZE_CORRECTED)
-            window.draw(white_sprite)
-    elif state == GameState.START_GAME:
+    elif game_state == GameState.CALIBRATE:
+        calibrate()
+    elif game_state == GameState.START_GAME:
         if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN) and window.has_focus():
             white_sprite = sf.Sprite(std_texture);
             white_sprite.scale(SCREEN_SIZE_CORRECTED)
             window.draw(white_sprite)
 
+            if len(corrected_coords) != 0:
+                tile = get_closest_tile(corrected_coords[0])
+                tile.set_color(255,0,0)
+
+                print("Updating tile: ", tile.coordinates)
 
         
-        
+
 
     window.display() # update the window
+
