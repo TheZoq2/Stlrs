@@ -85,20 +85,40 @@ def calibrate():
     white_sprite.scale(SCREEN_SIZE_CORRECTED)
     window.draw(white_sprite)
 
-def get_closest_tile(target):
-    closest_tile = tiles[0];
-    lowest_distance = 10000000000000000
+def get_closest_tiles(target, num):
+    global tile
 
+    sorted = []
     for y in tiles:
         for tile in y:
             if tile:
                 distance = math.sqrt((target.x - tile.get_world_pos()[0])**2 + (target.y - tile.get_world_pos()[1])**2)
+                sorted.append((tile, distance))
 
-                if distance < lowest_distance:
-                    lowest_distance = distance
-                    closest_tile = tile
-    
-    return closest_tile
+    sorted.sort(key=lambda tup: tup[1])
+
+    result = []
+    if len(sorted) < num:
+        result = sorted
+    result = sorted[0:num]
+
+    return [x for (x, _) in result]
+    #return []
+
+#def get_closest_tiles(target, num):
+#    closest_tile = tiles[0];
+#    lowest_distance = 10000000000000000
+#
+#    for y in tiles:
+#        for tile in y:
+#            if tile:
+#                distance = math.sqrt((target.x - tile.get_world_pos()[0])**2 + (target.y - tile.get_world_pos()[1])**2)
+#
+#                if distance < lowest_distance:
+#                    lowest_distance = distance
+#                    closest_tile = tile
+#    
+#    return closest_tile
 
 camera_offset = sf.Vector2(0,0)
 
@@ -153,15 +173,24 @@ while window.is_open:
     coords = read_camera_result()[1:];
     corrected_coords = []
 
+    pawn_sprites = []
+
     
     for coord in coords:
-        x = (coord.x ) #/SCREEN_CORRECTION
-        y = (coord.y ) #/SCREEN_CORRECTION
+        x = (coord.x ) * SCREEN_CORRECTION
+        y = (coord.y ) * SCREEN_CORRECTION
 
-        new_vec = sf.Vector2(x,y)
-        corrected_coords.append(new_vec + camera_offset)
+        new_vec = sf.Vector2(x,y) - camera_offset
+        corrected_coords.append(new_vec)
 
-        print(coord - camera_offset, end="")
+        test_sprite = sf.Sprite(std_texture)
+        test_sprite.scale((20, 20))
+        test_sprite.position =  new_vec
+        test_sprite.color = sf.Color(150,150,150)
+
+        pawn_sprites.append(test_sprite)
+    
+        #print(coord - camera_offset, end="")
 
     print("")
 
@@ -181,13 +210,16 @@ while window.is_open:
             window.draw(white_sprite)
 
             if len(corrected_coords) != 0:
-                tile = get_closest_tile(corrected_coords[0])
-                tile.set_color(255,0,0)
+                closest_tiles = get_closest_tiles(corrected_coords[0], 3)
 
-                print("Updating tile: ", tile.coordinates)
+                for tile in closest_tiles:
+                    tile.set_color(255,0,0)
+
+                #print("Updating tile: ", tile.coordinates)
 
         
-
+    for sprite in pawn_sprites:
+        window.draw(sprite)
 
     window.display() # update the window
 

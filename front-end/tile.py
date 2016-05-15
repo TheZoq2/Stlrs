@@ -40,7 +40,8 @@ class tile:
         canvas.draw(self.sprite)
 
     def get_world_pos(self):
-        return tile._calc_pos(self.coordinates)
+        pos = tile._calc_pos(self.coordinates)
+        return (pos[0] + 200*SCALE, pos[1] + 200 * SCALE)
 
     def set_color(self, r,g,b):
         self.sprite.color = sf.graphics.Color(r,g,b)
