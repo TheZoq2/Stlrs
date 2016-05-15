@@ -155,8 +155,8 @@ while window.is_open:
 
     
     for coord in coords:
-        x = (coord.x )/SCREEN_CORRECTION
-        y = (coord.y )/SCREEN_CORRECTION
+        x = (coord.x ) #/SCREEN_CORRECTION
+        y = (coord.y ) #/SCREEN_CORRECTION
 
         new_vec = sf.Vector2(x,y)
         corrected_coords.append(new_vec + camera_offset)

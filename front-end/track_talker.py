@@ -1,6 +1,6 @@
 import os
 
-SHOULD_RUN = False
+SHOULD_RUN = True
 
 class TrackTalker:
     def tell_calibrate():
