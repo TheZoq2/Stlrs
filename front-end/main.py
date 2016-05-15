@@ -5,6 +5,7 @@ from enum import *
 import time
 import os
 import math
+import constants as const
 
 from track_talker import TrackTalker
 
@@ -30,33 +31,6 @@ def read_camera_result():
             result.append(sf.Vector2(float(coords[0]), float(coords[1])))
     return result
 
-
-SCREEN_CORRECTION = 1.82
-SCREEN_SIZE = (550,550)
-SCREEN_SIZE_CORRECTED = ((SCREEN_SIZE[0] * SCREEN_CORRECTION, SCREEN_SIZE[1] * SCREEN_CORRECTION))
-
-STONE, CLAY, WHEAT, WOOL, WOOD, DESERT = range(0,6)
-TYPES = {STONE: 'media/stone.png', 
-    CLAY: 'media/clay.png', 
-    WHEAT: 'media/wheat.png', 
-    WOOL: 'media/wool.png',
-    WOOD: 'media/wood.png',
-    DESERT: 'media/desert.png'}
-
-TILE_RATIO = [STONE, STONE, STONE,
-        CLAY, CLAY, CLAY,
-        WHEAT, WHEAT, WHEAT, WHEAT,
-        WOOL, WOOL, WOOL, WOOL,
-        WOOD, WOOD, WOOD, WOOD,
-        DESERT]
-
-VALID_COORDINATES = [(1, 0), (2, 0), (3, 0),
-        (0, 1), (1, 1), (2, 1), (3, 1),
-        (0, 2), (1, 2), (2, 2), (3, 2), (4, 2),
-        (0, 3), (1, 3), (2, 3), (3, 3),
-        (1, 4), (2, 4), (3, 4)]
-
-
 def calibrate():
     global game_state
     global camera_offset
@@ -64,16 +38,17 @@ def calibrate():
     CONST_CAMERA_OFFSET = sf.Vector2(100, 100)
 
     if time.time() > img_cal_start + 2: #Find the offset of the pieces
-        smallest_distance = 1000000000000
-        smallest_coord = coords[0]
-        #Find the top left corner
-        for coord in coords:
-            distance = math.sqrt(coord.x**2 + coord.y**2)
-            if distance < smallest_distance:
-                smallest_distance = distance
-                smallest_coord = coord
+        if len(coords) != 0:
+            smallest_distance = 1000000000000
+            smallest_coord = coords[0]
+            #Find the top left corner
+            for coord in coords:
+                distance = math.sqrt(coord.x**2 + coord.y**2)
+                if distance < smallest_distance:
+                    smallest_distance = distance
+                    smallest_coord = coord
 
-        camera_offset = smallest_coord -CONST_CAMERA_OFFSET
+            camera_offset = smallest_coord -CONST_CAMERA_OFFSET
 
         game_state = GameState.START_GAME
     elif time.time() > img_cal_start + 1: #Let the tracker do some matrix magick
@@ -82,7 +57,7 @@ def calibrate():
         #game_state = GameState.START_GAME
 
     white_sprite = sf.Sprite(std_texture);
-    white_sprite.scale(SCREEN_SIZE_CORRECTED)
+    white_sprite.scale(const.SCREEN_SIZE_CORRECTED)
     window.draw(white_sprite)
 
 def get_closest_tile(target):
@@ -103,25 +78,25 @@ def get_closest_tile(target):
 camera_offset = sf.Vector2(0,0)
 
 # create the main window
-window = sf.RenderWindow(sf.VideoMode(SCREEN_SIZE[0], SCREEN_SIZE[1]), "PySFML")
+window = sf.RenderWindow(sf.VideoMode(const.SCREEN_SIZE[0], const.SCREEN_SIZE[1]), "PySFML")
 
 tiles = []
-shuf_tiles = list(TILE_RATIO)
+shuf_tiles = list(const.TILE_RATIO)
 random.shuffle(shuf_tiles)
 for y in range(0,7):
     tiles.append([])
     for x in range(0,6):
         tiles[y].append(None)
 
-for c in VALID_COORDINATES:
-    tile_texture = TYPES[shuf_tiles.pop()]
+for c in const.VALID_COORDINATES:
+    tile_texture = const.TYPES[shuf_tiles.pop()]
     tiles[c[0]][c[1]] = tile(1, tile_texture, c)
 
 std_texture = sf.Texture.from_file("media/1x1.png")
 
 calibrationTexture = sf.Texture.from_file("media/Calibration.png")
 calibrationSprite = sf.Sprite(calibrationTexture);
-calibrationSprite.scale((SCREEN_CORRECTION,SCREEN_CORRECTION))
+calibrationSprite.scale((const.SCREEN_CORRECTION, const.SCREEN_CORRECTION))
 
 game_state = GameState.WAIT_CALIBRATE
 
@@ -141,8 +116,8 @@ while window.is_open:
         if type(event) is sf.CloseEvent:
             window.close()
 
-        if type(event) is sf.ResizeEvent:
-            window.size = SCREEN_SIZE
+        #if type(event) is sf.ResizeEvent:
+         #   window.size = const.SCREEN_SIZE
 
     window.clear() # clear screen
     for y in tiles:
@@ -155,8 +130,8 @@ while window.is_open:
 
     
     for coord in coords:
-        x = (coord.x )/SCREEN_CORRECTION
-        y = (coord.y )/SCREEN_CORRECTION
+        x = (coord.x )/const.SCREEN_CORRECTION
+        y = (coord.y )/const.SCREEN_CORRECTION
 
         new_vec = sf.Vector2(x,y)
         corrected_coords.append(new_vec + camera_offset)
@@ -168,7 +143,7 @@ while window.is_open:
     if game_state == GameState.WAIT_CALIBRATE:
         window.draw(calibrationSprite);
 
-        if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN) and window.has_focus():
+        if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN):
             img_cal_start = time.time();
             game_state = GameState.CALIBRATE
 
@@ -177,7 +152,7 @@ while window.is_open:
     elif game_state == GameState.START_GAME:
         if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN) and window.has_focus():
             white_sprite = sf.Sprite(std_texture);
-            white_sprite.scale(SCREEN_SIZE_CORRECTED)
+            white_sprite.scale(const.SCREEN_SIZE_CORRECTED)
             window.draw(white_sprite)
 
             if len(corrected_coords) != 0:

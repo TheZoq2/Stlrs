@@ -1,6 +1,5 @@
 import sfml as sf
-
-SCALE = 0.5
+import constants as const
 
 class tile:
     
@@ -10,7 +9,7 @@ class tile:
 
         texture = sf.Texture.from_file(img_resource)
         s = sf.Sprite(texture)
-        s.scale((SCALE, SCALE))
+        s.scale((const.SCALE, const.SCALE))
         
         pos = tile._calc_pos(coordinates)
         s.position = sf.Vector2(pos[0], pos[1])
@@ -48,11 +47,11 @@ class tile:
 
     def _calc_pos(coordinates):
         if coordinates[1] % 2 == 0:
-            y = coordinates[1] * (300 * SCALE)
-            x = coordinates[0] * (346 * SCALE)
+            y = coordinates[1] * (300 * const.SCALE)
+            x = coordinates[0] * (346 * const.SCALE)
             return (x, y)
         else:
-            y = coordinates[1] * (300 * SCALE)
-            x = coordinates[0] * (346 * SCALE) + (173 * SCALE)
+            y = coordinates[1] * (300 * const.SCALE)
+            x = coordinates[0] * (346 * const.SCALE) + (173 * const.SCALE)
             return (x, y)
         
