@@ -172,9 +172,9 @@ while window.is_open:
             camera_wait_start = time.time()
 
     elif game_state == GameState.DO_TURN:
-        if time.time() > camera_wait_start + 1:
-            if len(corrected_coords) != 0:
-                (closest_tiles, distances) = get_closest_tiles(corrected_coords[0], 3)
+        if time.time() > camera_wait_start + 1.5:
+            for corr_coord in corrected_coords:
+                (closest_tiles, distances) = get_closest_tiles(corr_coord, 3)
                 
                 is_corner = True
                 is_road = False
