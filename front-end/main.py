@@ -101,8 +101,6 @@ for c in const.VALID_COORDINATES:
     tile_texture = const.TYPES[shuf_tiles.pop()]
     tiles[c[0]][c[1]] = tile(1, tile_texture, c)
 
-r = road((tiles[2][1], tiles[1][1]))
-
 std_texture = sf.Texture.from_file("media/1x1.png")
 
 calibrationTexture = sf.Texture.from_file("media/Calibration.png")
@@ -120,6 +118,11 @@ TrackTalker.tell_restart();
 coords=[]
 
 settlements = []
+roads = []
+
+#roads.append(road((tiles[2][2], tiles[2][1])))
+#settlements.append(Settlement([tiles[2][2],tiles[3][2],tiles[2][1]]))
+#settlements.append(Settlement([tiles[2][2],tiles[3][2],tiles[2][3]]))
 
 # start the game loop
 while window.is_open:
@@ -129,15 +132,14 @@ while window.is_open:
         if type(event) is sf.CloseEvent:
             window.close()
 
-        #if type(event) is sf.ResizeEvent:
-        #   window.size = (const.SCREEN_SIZE)
+        if type(event) is sf.ResizeEvent:
+           window.size = (const.SCREEN_SIZE)
 
     window.clear() # clear screen
     for y in tiles:
         for x in y:
             if x:
                 x.draw(window);
-    r.draw(window)
 
     coords = read_camera_result()[1:];
     corrected_coords = []
@@ -196,12 +198,15 @@ while window.is_open:
 
                 if is_road:
                     print("Piece is road")
+
+                    roads.append(road(closest_tiles))
+                    
                 elif is_corner:
                     print("Piece is settlement")
 
                     settlements.append(Settlement(closest_tiles))
 
-                game_state = GameState.RUN_GAME
+            game_state = GameState.RUN_GAME
 
 
         else:
@@ -217,6 +222,9 @@ while window.is_open:
 
     for settlement in settlements:
         settlement.draw(window)
+
+    for rd in roads:
+        rd.draw(window)
 
     window.display() # update the window
 

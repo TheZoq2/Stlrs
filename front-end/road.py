@@ -8,7 +8,7 @@ class road:
         t  = sf.Texture.from_file('media/road.png')
         s = sf.Sprite(t)
         s.scale((const.SCALE, const.SCALE))
-        s.origin = sf.Vector2(50, 12.5)
+        s.origin = sf.Vector2(50, 25)
         pos = self._calc_pos()
         ang = self._calc_angle()
         print(ang)
