@@ -42,6 +42,9 @@ class tile:
         pos = tile._calc_pos(self.coordinates)
         return (pos[0] + 200*const.SCALE, pos[1] + 200 * const.SCALE)
 
+    def get_coordinates(self):
+        return self.coordinates
+
     def set_color(self, r,g,b):
         self.sprite.color = sf.graphics.Color(r,g,b)
         
