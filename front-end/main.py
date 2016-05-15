@@ -1,6 +1,7 @@
 import sfml as sf
 import random
 from tile import *
+from road import *
 from enum import *
 import time
 import os
@@ -112,6 +113,8 @@ for c in const.VALID_COORDINATES:
     tile_texture = const.TYPES[shuf_tiles.pop()]
     tiles[c[0]][c[1]] = tile(1, tile_texture, c)
 
+r = road((tiles[2][1], tiles[1][1]))
+
 std_texture = sf.Texture.from_file("media/1x1.png")
 
 calibrationTexture = sf.Texture.from_file("media/Calibration.png")
@@ -136,14 +139,15 @@ while window.is_open:
         if type(event) is sf.CloseEvent:
             window.close()
 
-        if type(event) is sf.ResizeEvent:
-            window.size = (const.SCREEN_SIZE)
+        #if type(event) is sf.ResizeEvent:
+        #   window.size = (const.SCREEN_SIZE)
 
     window.clear() # clear screen
     for y in tiles:
         for x in y:
             if x:
                 x.draw(window);
+    r.draw(window)
 
     coords = read_camera_result()[1:];
     corrected_coords = []
