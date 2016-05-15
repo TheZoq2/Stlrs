@@ -7,13 +7,15 @@ import time
 import os
 import math
 import constants as const
+from settlement import *
 
 from track_talker import TrackTalker
 
 class GameState(Enum):
     WAIT_CALIBRATE = 0
     CALIBRATE = 1
-    START_GAME = 2
+    RUN_GAME = 2
+    DO_TURN = 3
     
 
 def read_camera_result():
@@ -38,7 +40,7 @@ def calibrate():
 
     CONST_CAMERA_OFFSET = sf.Vector2(100, 100)
 
-    if time.time() > img_cal_start + 2: #Find the offset of the pieces
+    if time.time() > camera_wait_start + 2: #Find the offset of the pieces
         if len(coords) != 0:
             smallest_distance = 1000000000000
             smallest_coord = coords[0]
@@ -51,11 +53,11 @@ def calibrate():
 
             camera_offset = smallest_coord -CONST_CAMERA_OFFSET
 
-        game_state = GameState.START_GAME
-    elif time.time() > img_cal_start + 1: #Let the tracker do some matrix magick
+        game_state = GameState.RUN_GAME
+    elif time.time() > camera_wait_start + 1: #Let the tracker do some matrix magick
         #Do calibration stuff
         TrackTalker.tell_calibrate();
-        #game_state = GameState.START_GAME
+        #game_state = GameState.RUN_GAME
 
     white_sprite = sf.Sprite(std_texture);
     white_sprite.scale(const.SCREEN_SIZE_CORRECTED)
@@ -78,23 +80,9 @@ def get_closest_tiles(target, num):
         result = sorted
     result = sorted[0:num]
 
-    return [x for (x, _) in result]
-    #return []
+    #print(result)
+    return ([x for (x, _) in result], [x for (_, x) in result])
 
-#def get_closest_tiles(target, num):
-#    closest_tile = tiles[0];
-#    lowest_distance = 10000000000000000
-#
-#    for y in tiles:
-#        for tile in y:
-#            if tile:
-#                distance = math.sqrt((target.x - tile.get_world_pos()[0])**2 + (target.y - tile.get_world_pos()[1])**2)
-#
-#                if distance < lowest_distance:
-#                    lowest_distance = distance
-#                    closest_tile = tile
-#    
-#    return closest_tile
 
 camera_offset = sf.Vector2(0,0)
 
@@ -125,11 +113,13 @@ game_state = GameState.WAIT_CALIBRATE
 
 calibratePressed = False;
 
-img_cal_start = 0
+camera_wait_start = 0
 
 TrackTalker.tell_restart();
 
 coords=[]
+
+settlements = []
 
 # start the game loop
 while window.is_open:
@@ -169,36 +159,64 @@ while window.is_open:
 
         pawn_sprites.append(test_sprite)
     
-        #print(coord - camera_offset, end="")
 
-    print("")
 
     if game_state == GameState.WAIT_CALIBRATE:
         window.draw(calibrationSprite);
 
         if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN):
-            img_cal_start = time.time();
+            camera_wait_start = time.time();
             game_state = GameState.CALIBRATE
 
     elif game_state == GameState.CALIBRATE:
         calibrate()
-    elif game_state == GameState.START_GAME:
+    elif game_state == GameState.RUN_GAME:
         if sf.Keyboard.is_key_pressed(sf.Keyboard.RETURN) and window.has_focus():
+            game_state = GameState.DO_TURN
+            camera_wait_start = time.time()
+
+    elif game_state == GameState.DO_TURN:
+        if time.time() > camera_wait_start + 1:
+            if len(corrected_coords) != 0:
+                (closest_tiles, distances) = get_closest_tiles(corrected_coords[0], 3)
+                
+                is_corner = True
+                is_road = False
+
+                for d in distances:
+                    if abs(d - const.RADIUS) > const.RADIUS * 0.1:
+                        is_corner = False
+
+                if not is_corner:
+                    is_road = True
+                    for d in distances[0:2]:
+                        ROAD_DISTANCE = const.RADIUS * math.cos(math.pi/6)
+                        if abs(d - ROAD_DISTANCE) > ROAD_DISTANCE * 0.1:
+                            is_road = False
+
+                if is_road:
+                    print("Piece is road")
+                elif is_corner:
+                    print("Piece is settlement")
+
+                    settlements.append(Settlement(closest_tiles))
+
+                game_state = GameState.RUN_GAME
+
+
+        else:
             white_sprite = sf.Sprite(std_texture);
             white_sprite.scale(const.SCREEN_SIZE_CORRECTED)
             window.draw(white_sprite)
 
-            if len(corrected_coords) != 0:
-                closest_tiles = get_closest_tiles(corrected_coords[0], 3)
 
-                for tile in closest_tiles:
-                    tile.set_color(255,0,0)
-
-                #print("Updating tile: ", tile.coordinates)
 
         
     for sprite in pawn_sprites:
         window.draw(sprite)
+
+    for settlement in settlements:
+        settlement.draw(window)
 
     window.display() # update the window
 
